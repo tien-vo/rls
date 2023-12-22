@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "rls"
+version = "0.1.0"
+description = ""
+authors = ["Tien Vo <tien.a.vo@proton.me>"]
+license = "GPL-3.0-only"
+readme = "README.md"
+packages = [{ include = "rls", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
