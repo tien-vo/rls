@@ -25,6 +25,10 @@ format:
 	@micromamba run -n $(NAME) poetry run isort src/
 	@micromamba run -n $(NAME) poetry run black src/
 
+.PHONY: test
+test:
+	@micromamba run -n $(NAME) pytest -s
+
 .PHONY: clean
 clean:
 	find . | grep -E "(/__pycache__$$)" | xargs rm -rf
