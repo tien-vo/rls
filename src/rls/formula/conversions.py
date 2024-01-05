@@ -23,6 +23,7 @@ def cartesian_to_FAC(g, ux, uy, uz, B0_x, B0_z, model, species="electron"):
     units = model.units
     species = getattr(units, species)
     V_factor = (units.L_factor / units.T_factor).to("1000 km/s")
+    W_factor = units.W_factor
 
     B0_mag = np.sqrt(B0_x**2 + B0_z**2)
     u_mag = np.sqrt(ux**2 + uy**2 + uz**2)
@@ -33,7 +34,6 @@ def cartesian_to_FAC(g, ux, uy, uz, B0_x, B0_z, model, species="electron"):
     V_perp = V_perp * V_factor
     V_mag = V_mag * V_factor
 
-    W = (0.5 * species.mass * V_mag**2).to("eV")
+    W = (g - 1) * W_factor.to("eV")
     A = np.arccos(V_para / V_mag)
-    A = SimQuantity(np.degrees(A.code), unit="deg")
     return V_para, V_perp, W, A

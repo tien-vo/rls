@@ -106,6 +106,7 @@ class Simulation:
                     f"({n / run_steps:.2%}, "
                     f"{T_per_step:f} ms/step, "
                     f"estimated remaining run time = {T_est:.2f} min)",
+                    flush=True,
                 )
                 time = timer()
 
@@ -120,7 +121,7 @@ class Simulation:
             save_steps=save_steps,
             number_of_particles=number_of_particles,
         )
-        print("Done!")
+        print("Done!", flush=True)
 
     def save_data(self):
         if self.name is None:
