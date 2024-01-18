@@ -52,6 +52,7 @@ class HyperbolicGradientModel(UniformPlasmaModel):
     @staticmethod
     @nb.njit(
         [
+            f"UniTuple(f8, 6)(f8, {'f8,' * 3} {'f8,' * 3})",
             f"UniTuple(f8[::1], 6)(f8, {'f8[::1],' * 3} {'f8,' * 3})",
             f"UniTuple(f8[:, ::1], 6)(f8, {'f8[:, ::1],' * 3} {'f8,' * 3})",
             f"UniTuple(f8[::1], 6)({'f8[::1],' * 4} {'f8,' * 3})",
@@ -60,10 +61,13 @@ class HyperbolicGradientModel(UniformPlasmaModel):
         cache=True,
     )
     def field(t, x, y, z, R, Bh, B0) -> tuple:
-        Ex = np.zeros_like(x)
-        Ey = np.zeros_like(y)
-        Ez = np.zeros_like(z)
         Bx = -x * B0 * d_eta(z, R, Bh, B0)
-        By = np.zeros_like(y)
         Bz = B0 * eta(z, R, Bh, B0)
+        if isinstance(x, np.float64):
+            Ex, Ey, Ez, By = 0.0, 0.0, 0.0, 0.0
+        else:
+            Ex = np.zeros_like(x)
+            Ey = np.zeros_like(y)
+            Ez = np.zeros_like(z)
+            By = np.zeros_like(y)
         return (Ex, Ey, Ez, Bx, By, Bz)
