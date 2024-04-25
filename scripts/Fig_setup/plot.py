@@ -1,6 +1,7 @@
 import colorcet
 import matplotlib as mpl
 import numpy as np
+import matplotlib.patches as patches
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from rls.formula.conversions import cartesian_to_FAC
 from rls.io import work_dir
@@ -136,7 +137,7 @@ fig = mu.plt.figure(figsize=(12, 10))
 gs = fig.add_gridspec(15, 3, width_ratios=(4.0, 1.0, 2.5))
 
 # 2D domain
-z = np.linspace(-3, 3, Nz := 1000) * R.code
+z = np.linspace(-2, 2, Nz := 1000) * R.code
 x = np.linspace(-3, 3, Nx := 1000) * 0.4 * R.code
 X, Z = np.meshgrid(x, z, indexing="ij")
 Y = np.zeros_like(X)
@@ -180,20 +181,31 @@ ax_a.set_xticklabels([])
 ax_a.locator_params(axis="y", nbins=5)
 ax_a.set_ylabel("$x/R$")
 mu.add_text(ax_a, 0.02, 0.93, "(a)", ha="left", va="top")
+ax_a.arrow(
+    -1.8, 1.45, -0.15, 0,
+    color="k",
+    linewidth=1,
+    head_width=0.1,
+    clip_on=False,
+)
+ax_a.text(-1.75, 1.35, "SW", clip_on=False)
+ax_a.arrow(
+    1.8, 1.45, 0.15, 0,
+    color="k",
+    linewidth=1,
+    head_width=0.1,
+    clip_on=False,
+)
+ax_a.text(1.3, 1.35, "ASW", clip_on=False)
 
 # 1D domain
 ax_b_l = fig.add_subplot(gs[3:6, 0])
 ax_b_r = ax_b_l.twinx()
-ax_b_r.plot(
-    Z[Nx // 2, :] / R.code, Bw_x[Nx // 2, :] / B0.code, "-b", label="$B_{w,x}$"
-)
-ax_b_r.plot(
-    Z[Nx // 2, :] / R.code, Bw_y[Nx // 2, :] / B0.code, "-r", label="$B_{w,y}$"
-)
+ax_b_r.plot(Z[Nx // 2, :] / R.code, Bw_x[Nx // 2, :] / B0.code, "-r")
 ax_b_l.arrow(-0.4, -0.2, -0.5, 0.0, color="k", linewidth=2, head_width=0.02)
-ax_b_l.text(-0.7, -0.15, "$\\vec{k}$")
+ax_b_l.text(-0.7, -0.17, "$\\vec{k}$")
 ax_b_l.plot(Z[Nx // 2, :] / R.code, B0_z[Nx // 2, :] / np.abs(B0.code), "-k")
-ax_b_l.set_ylabel("$B_{0z}/B_0$")
+ax_b_l.set_ylabel("$B_{0,z}/B_0$")
 for ax in [ax_b_r, ax_b_l]:
     mu.add_colorbar(ax, size="1%").remove()
     ax.set_xlim(z[0] / R.code, z[-1] / R.code)
@@ -203,16 +215,9 @@ for ax in [ax_b_r, ax_b_l]:
 mu.add_text(ax_b_l, 0.02, 0.93, "(b)", ha="left", va="top")
 ax_b_l.set_ylim(-1.0, 0)
 ax_b_r.set_ylim(-0.07, 0.07)
-ax_b_r.legend(
-    loc="lower right",
-    frameon=False,
-    borderpad=0,
-    borderaxespad=0.2,
-    handletextpad=0.4,
-    handlelength=1.5,
-    labelspacing=0.2,
-)
-ax_b_r.set_ylabel("$B_w/B_0$")
+ax_b_r.set_ylabel("$B_{w,x}/B_0$")
+ax_b_r.tick_params(axis="y", colors="r")
+ax_b_r.yaxis.label.set_color("r")
 
 # z vs Vz
 ax_c = fig.add_subplot(gs[6:9, 0])
@@ -302,6 +307,12 @@ def H_surface(alpha, Vi_para):
         V_factor.code_to_user(vz).to("1000 km/s"),
         V_factor.code_to_user(vp).to("1000 km/s"),
     )
+
+def get_trap_angle(z_R):
+    B0_z = B0.code * model.eta(z_R * R.code, *model.background_field_args)
+    wce = np.abs(qe.code / me.code * B0_z)
+    Vr = model.resonant_velocity(wce, w_wce, wpe0.code, c.code)
+    return np.arcsin(np.sqrt(B0_z / B0.code))
 
 
 ax_f = fig.add_subplot(gs[0:5, 2])
@@ -419,15 +430,35 @@ for ax in [ax_a, ax_b_l, ax_b_r, ax_c, ax_d, ax_e]:
     ax.set_xlim(-2, 2)
     ax.locator_params(axis="x", nbins=5)
 
+V_para_arr = np.linspace(-10, 0, 1000)
 for ax in [ax_f, ax_g, ax_h]:
     ax.set_xlim(-10, 0)
     ax.set_ylim(0, 10)
     ax.set_yticks(np.arange(0, 10, 2))
     ax.locator_params(axis="both", nbins=5)
+    ax.fill_between(
+        V_para_arr,
+        -V_para_arr * np.tan(get_trap_angle(0)),
+        10,
+        color="k" if ax == ax_f else "w",
+        alpha=0.2,
+    )
 
 fig.align_ylabels([ax_a, ax_b_l, ax_c, ax_d, ax_e])
 fig.align_ylabels([ax_f, ax_g, ax_h])
 fig.align_ylabels([cb.ax, ax_b_r])
-fig.subplots_adjust(top=0.98, left=0.09, right=0.92, bottom=0.08)
-fig.savefig(work_dir / "plots" / "fig_setup.png", dpi=600)
+fig.subplots_adjust(top=0.97, left=0.09, right=0.92, bottom=0.08)
+# fig.savefig(work_dir / "plots" / "fig_setup.png", dpi=600)
+fig.savefig(
+    work_dir
+    / "plots"
+    / "fig_setup_and_single_particle_trajectories.png",
+    dpi=600,
+)
+fig.savefig(
+    work_dir
+    / "plots"
+    / "fig_setup_and_single_particle_trajectories_lowres.png",
+    dpi=100,
+)
 # mu.plt.show()
