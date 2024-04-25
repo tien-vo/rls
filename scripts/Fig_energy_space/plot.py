@@ -98,20 +98,6 @@ def plot(ax, name, Bh_B0, w_wce):
     zw = model.zw.code
     sw = model.sw.code
 
-    def A_res(W, x, z):
-        g = 1 + (W / units.W_factor.user).decompose()
-        V = np.sqrt(1 - 1 / g**2)
-        _, _, _, B0_x, _, B0_z = model.background_field(
-            0.0, x, 0.0, z, *model.background_field_args
-        )
-        wce = np.abs(q / m) * np.sqrt(B0_x**2 + B0_z**2)
-        w, k = model.dispersion_relation(wce, w_wce, wpe0, c)
-        return np.degrees(np.arccos(wce * (g * w_wce - 1) / (k * V)))
-
-    Am_arr = A_res(W_arr, xw, zw - sw)
-    Ap_arr = A_res(W_arr, xw, zw + sw)
-    ax.plot(Ap_arr, W_arr, "--w", lw=2, zorder=9)
-    ax.plot(Am_arr, W_arr, "-w", lw=2, zorder=9)
     ax.contour(
         Ag.value,
         Wg.value,
@@ -133,6 +119,24 @@ def plot(ax, name, Bh_B0, w_wce):
         cmap="cet_rainbow4",
         norm=mu.mplc.LogNorm(1e6, 1e10),
     )
+
+    def A_res(W, x, z):
+        g = 1 + (W / units.W_factor.user).decompose()
+        V = np.sqrt(1 - 1 / g**2)
+        _, _, _, B0_x, _, B0_z = model.background_field(
+            0.0, x, 0.0, z, *model.background_field_args
+        )
+        wce = np.abs(q / m) * np.sqrt(B0_x**2 + B0_z**2)
+        w, k = model.dispersion_relation(wce, w_wce, wpe0, c)
+        return np.degrees(np.arccos(wce * (g * w_wce - 1) / (k * V)))
+
+    Am_arr = A_res(W_arr, xw, zw - sw)
+    Ap_arr = A_res(W_arr, xw, zw + sw)
+    ax.fill_betweenx(
+        W_arr.value, Ap_arr.value, Am_arr.value, color="w", alpha=0.2,
+    )
+    #  ax.plot(Ap_arr, W_arr, "--w", lw=2, zorder=9)
+    #  ax.plot(Am_arr, W_arr, "-w", lw=2, zorder=9)
     return im
 
 
@@ -153,17 +157,17 @@ kernel = Gaussian2DKernel(4)
 kkw = dict(boundary="extend")
 
 mu.add_colorbar(axes[0, 2]).remove()
-im = plot(axes[0, 0], "fig_energy_space_Bh_05_Bw_001_A", -0.5, 0.05)
-im = plot(axes[0, 1], "fig_energy_space_Bh_05_Bw_001_B", -0.5, 0.10)
-im = plot(axes[0, 2], "fig_energy_space_Bh_05_Bw_001_C", -0.5, 0.15)
+im = plot(axes[0, 0], "fig_energy_space_w_005_Bw_001_Bh_05", -0.5, 0.05)
+im = plot(axes[0, 1], "fig_energy_space_w_010_Bw_001_Bh_05", -0.5, 0.10)
+im = plot(axes[0, 2], "fig_energy_space_w_015_Bw_001_Bh_05", -0.5, 0.15)
 mu.add_text(axes[0, 0], 0.05, 0.95, "(a-1)", ha="left", va="top")
 mu.add_text(axes[0, 1], 0.05, 0.95, "(a-2)", ha="left", va="top")
 mu.add_text(axes[0, 2], 0.05, 0.95, "(a-3)", ha="left", va="top")
 
 cax = mu.add_colorbar(axes[1, 2])
-im = plot(axes[1, 0], "fig_energy_space_Bh_08_Bw_001_A", -0.8, 0.05)
-im = plot(axes[1, 1], "fig_energy_space_Bh_08_Bw_001_B", -0.8, 0.10)
-im = plot(axes[1, 2], "fig_energy_space_Bh_08_Bw_001_C", -0.8, 0.15)
+im = plot(axes[1, 0], "fig_energy_space_w_005_Bw_001_Bh_08", -0.8, 0.05)
+im = plot(axes[1, 1], "fig_energy_space_w_010_Bw_001_Bh_08", -0.8, 0.10)
+im = plot(axes[1, 2], "fig_energy_space_w_015_Bw_001_Bh_08", -0.8, 0.15)
 cb = fig.colorbar(im, cax=cax)
 cb.set_label("eV/(cm$^2$ s sr eV)")
 mu.add_text(axes[1, 0], 0.05, 0.95, "(b-1)", ha="left", va="top")

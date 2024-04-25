@@ -1,13 +1,25 @@
 import config as cf
 import numpy as np
 import zarr
+import click
 from rls.formula.conversions import cartesian_to_FAC
 from rls.io import data_dir
 
 
-def process(i):
-    cf.sim.name = name[i]
-    cf.model.w_wce = w_wce[i]
+@click.command()
+@click.option("--w-wce", default=0.05, help="Frequency")
+@click.option("--Bw-B0", default=0.01, help="Magnitude")
+@click.option("--Bh-B0", default=0.5, help="Depletion level")
+def process(w_wce, bw_b0, bh_b0):
+    cf.sim.name = (
+        f"fig_energy_space_"
+        f"w_{100 * w_wce:03.0f}_"
+        f"Bw_{100 * bw_b0:03.0f}_"
+        f"Bh_{10 * bh_b0:02.0f}"
+    )
+    cf.model.w_wce = w_wce
+    cf.model.Bw = np.abs(bw_b0 * cf.units.B_factor)
+    cf.model.Bh = -bh_b0 * cf.units.B_factor
 
     cf.sim.load_data()
     t = cf.sim.solutions.t[:]
@@ -33,9 +45,5 @@ def process(i):
     zarr.save(where("Ai"), A[0, :].user)
     zarr.save(where("Af"), A[-1, :].user)
 
-
-name = [f"fig_energy_space_Bh_08_Bw_001_{x}" for x in ["A", "B", "C"]]
-w_wce = [0.05, 0.1, 0.15]
-process(0)
-process(1)
-process(2)
+if __name__ == "__main__":
+    process()
