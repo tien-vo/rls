@@ -1,16 +1,16 @@
 import numpy as np
-from rls.models import WhistlerAtGradientModel
+from rls.models import WhistlerAtHyperbolicGradientModel
 from rls.simulation import Simulation
 
 Bw_B0 = np.logspace(np.log10(1e-4), np.log10(5e-1), 100)
-name = lambda ib: f"vary_Bw_{ib}_Bh_05"
-process_path = "Fig_vary_Bw_Bh_05"
+name = lambda ib: f"vary_Bw_{ib}_Bh_03"
+process_path = "Fig_vary_Bw_Bh_03"
 
 sim = Simulation(
-    model=WhistlerAtGradientModel(
+    model=WhistlerAtHyperbolicGradientModel(
         w_wce=0.1,
         sw=1.75,
-        Bh=-0.5,
+        Bh=-0.3,
         B0=-1.0,
         theta=0.0,
     )

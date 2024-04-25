@@ -10,7 +10,7 @@ from rls.formula.physics import lorentz_factor
 @click.command()
 @click.option("--ib", default=0, help="Wave amplitude index")
 def run(ib):
-    cf.sim.name = f"vary_Bw_{ib}"
+    cf.sim.name = cf.name(ib)
     cf.model.Bw = np.abs(cf.Bw_B0[ib] * cf.units.B_factor)
 
     number_of_particles = 500_000
@@ -42,7 +42,7 @@ def run(ib):
         initial_conditions=particles,
         run_time=T_run,
         step_size=1e-2 * cf.Tc.code,
-        save_intervals=3,
+        save_intervals=20,
         log_intervals=1000,
     )
     cf.sim.save_data()
