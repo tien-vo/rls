@@ -21,17 +21,24 @@ def process(ih):
     )
     w, k = cf.model.dispersion_relation(wce, cf.w_wce, cf.wpe0.code, cf.c.code)
 
-    # Wave-frame energization
-    _, _, W, _ = cartesian_to_FAC(g, ux, uy, uz + w / k, B0_x, B0_z, cf.model)
-    dW = (W[-1, :] - W[0, :]).user
-
-    # Plasma-frame scattering
-    V_para, V_perp, _, A = cartesian_to_FAC(
+    V_para, V_perp, W, A = cartesian_to_FAC(
         g, ux, uy, uz, B0_x, B0_z, cf.model
     )
-    Vi_para = V_para[0, :].user
-    Vi_perp = V_perp[0, :].user
-    dA = (A[-1, :] - A[0, :]).user
+    V_para = V_para.user
+    V_perp = V_perp.user
+    W = W.user
+    A = np.degrees(A.user)
+    Vi_para = V_para[0, :]
+    Vi_perp = V_perp[0, :]
+    Wi = W[0, :][None, :]
+    Ai = A[0, :][None, :]
+    dW = np.nanmean(W - Wi, axis=0)
+    dA = np.nanmean(A - Ai, axis=0)
+    V = np.sqrt(V_para**2 + V_perp**2)
+    Dpp = np.nanmean(
+        ((V_para - Vi_para[None, :])**2
+        + (V_perp - Vi_perp[None, :])**2) / V**2, axis=0)
+    Daa = np.nanmean((A - Ai)**2, axis=0)
 
     resonant_particles = dA < 0
     kw = dict(
@@ -41,16 +48,16 @@ def process(ih):
     )
     H = np.histogram2d(**kw)[0]
     H_dW = np.histogram2d(weights=dW[resonant_particles], **kw)[0]
-    H_dA = np.histogram2d(weights=np.degrees(dA[resonant_particles]), **kw)[0]
-    H_dW2 = np.histogram2d(weights=dW[resonant_particles] ** 2, **kw)[0]
-    H_dA2 = np.histogram2d(weights=dA[resonant_particles] ** 2, **kw)[0]
+    H_dA = np.histogram2d(weights=dA[resonant_particles], **kw)[0]
+    H_Dpp = np.histogram2d(weights=Dpp[resonant_particles], **kw)[0]
+    H_Daa = np.histogram2d(weights=Daa[resonant_particles], **kw)[0]
     dW = H_dW / H
     dA = H_dA / H
-    dW2 = H_dW2 / H
-    dA2 = H_dA2 / H
+    Dpp = H_Dpp / H
+    Daa = H_Daa / H
 
-    print(f"Processed {ih}")
-    return dW, dA, dW2, dA2
+    print(f"Processed {ib}")
+    return dW, dA, Dpp, Daa
 
 
 V_para_bins = np.linspace(-10, -2, 200) * cf.V_factor.user.unit
@@ -67,10 +74,10 @@ Wg_perp = (0.5 * cf.species.m.user * Vg_perp**2).to("eV")
 
 dW = np.zeros_like(Bg)
 dA = np.zeros_like(Bg)
-dW2 = np.zeros_like(Bg)
-dA2 = np.zeros_like(Bg)
+Dpp = np.zeros_like(Bg)
+Daa = np.zeros_like(Bg)
 for ib in range(cf.Bh_B0.size):
-    dW[ib, ...], dA[ib, ...], dW2[ib, ...], dA2[ib, ...] = process(ib)
+    dW[ib, ...], dA[ib, ...], Dpp[ib, ...], Daa[ib, ...] = process(ib)
 
 zarr.save(
     store=data_store,
@@ -82,6 +89,6 @@ zarr.save(
     Wg_perp=Wg_perp,
     dW=dW,
     dA=dA,
-    dW2=dW2,
-    dA2=dA2,
+    Dpp=Dpp,
+    Daa=Daa,
 )
