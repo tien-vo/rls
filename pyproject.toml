@@ -19,6 +19,7 @@ tvolib = "^0.5.1"
 datashader = "^0.16.0"
 holoviews = "^1.18.1"
 colorcet = "^3.0.1"
+matplotlib-label-lines = "^0.7.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
