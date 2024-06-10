@@ -16,7 +16,7 @@ class NaturalUnits(ABC):
     scaling: str = "electron"
     light_speed: SimQuantity = SimQuantity(1.0, constants.c)
 
-    _species = []
+    _species: list[str] = []
 
     def __post_init__(self):
         self.add_species(Ion)
