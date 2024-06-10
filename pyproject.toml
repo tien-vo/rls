@@ -1,11 +1,25 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.poetry]
 name = "rls"
 version = "0.1.0"
-description = ""
-authors = ["Tien Vo <tien.a.vo@proton.me>"]
+description = "Package for performing relativistic Lorentz simulations (rls)"
+authors = [
+    "Tien Vo <tvo.work@proton.me>"
+]
 license = "GPL-3.0-only"
 readme = "README.md"
-packages = [{ include = "rls", from = "src" }]
+repository = "https://github.com/tien-vo/rls"
+classifiers = [
+    "Programming Language :: Python",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+packages = [
+    { include = "rls", from = "src" }
+]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
@@ -38,11 +52,9 @@ exclude = [
 select = ["F", "I", "E", "W"]
 ignore = ["E731"]
 
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = 70
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
