@@ -1,5 +1,5 @@
-from .model import *
-from .natural_units import *
-from .species import *
-from .quantity import *
-from .particle import *
+from .model import Model
+from .natural_units import NaturalUnits
+from .particle import Particle
+from .quantity import SimQuantity
+from .species import Electron, Ion, Species
