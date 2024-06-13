@@ -2,7 +2,7 @@ __all__ = ["NaturalUnits"]
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import astropy.constants.si as constants
 from astropy.units import isclose
@@ -16,21 +16,21 @@ class NaturalUnits(ABC):
     scaling: str = "electron"
     light_speed: SimQuantity = SimQuantity(1.0, constants.c)
 
-    _species: list[str] = []
+    _species_name_list: list = field(default_factory=list)
 
     def __post_init__(self):
         self.add_species(Ion)
         self.add_species(Electron)
 
     def add_species(self, species: Species):
-        if species.name not in self._species:
-            self._species.append(species.name)
+        if species.name not in self._species_name_list:
+            self._species_name_list.append(species.name)
 
         setattr(self, species.name, species)
 
     @property
     def species(self) -> Iterator[Species]:
-        for species in self._species:
+        for species in self._species_name_list:
             yield getattr(self, species)
 
     @property
