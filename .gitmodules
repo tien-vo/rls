@@ -1,0 +1,3 @@
+[submodule "projects/whistler_in_magnetic_gradient/manuscript"]
+	path = projects/whistler_in_magnetic_gradient/manuscript
+	url = git@github.com:tien-vo/vo-2024_parallel_whistlers_at_a_magnetic_gradient.git
