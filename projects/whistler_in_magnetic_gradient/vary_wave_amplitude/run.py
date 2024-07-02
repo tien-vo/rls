@@ -2,6 +2,7 @@ import click
 import config as cf
 import numpy as np
 from astropy.units import Quantity
+
 from rls.data_types import Particle, SimQuantity
 from rls.formula.conversions import energy_to_speed
 from rls.formula.physics import lorentz_factor

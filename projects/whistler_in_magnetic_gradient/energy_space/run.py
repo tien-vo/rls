@@ -44,7 +44,7 @@ def run(w_wce, bw_b0, bh_b0):
     g0 = lorentz_factor(ux0, uy0, uz0, cf.c.code)
     particles = Particle(cf.species, 0.0, g0, x0, y0, z0, ux0, uy0, uz0)
 
-    W_run = Quantity(1.0, "eV")
+    W_run = Quantity(10.0, "eV")
     W_run = SimQuantity(cf.W_factor.user_to_code(W_run), W_run)
     V_run = energy_to_speed(W_run, cf.units)
     T_run = (4 * cf.R / V_run).code

@@ -1,18 +1,19 @@
 import astropy.units as u
-import colorcet
 import config as cf
 import numpy as np
 import zarr
 from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.units import Quantity
+from tvolib import matplotlib_utils as mu
+
 from rls.formula.physics import f_kappa, f_maxwellian
 from rls.io import data_dir, work_dir
-from tvolib import mpl_utils as mu
 
 
 def get_data(name):
     nc = Quantity(75.63, "cm-3")
-    nh = Quantity(96.46, "cm-3")
+    # nh = Quantity(96.46, "cm-3")
+    nh = Quantity(50.46, "cm-3")
     ns = Quantity(5.35, "cm-3")
     Vthc = Quantity(3200, "km/s")
     Vthh = Quantity(2560, "km/s")
@@ -120,13 +121,15 @@ def plot_spectrum(ax, name, Bh_B0, w_wce):
         w, k = model.dispersion_relation(wce, w_wce, wpe0, c)
         return np.degrees(np.arccos(wce * (g * w_wce - 1) / (k * V)))
 
-    Am_arr = A_res(W_arr, xw, zw - sw)
-    Ap_arr = A_res(W_arr, xw, zw + sw)
+    Am_arr = A_res(W_arr, xw, zw - 2 * sw)
+    Ap_arr = A_res(W_arr, xw, zw + 2 * sw)
     Am_arr[np.isnan(Am_arr)] = Quantity(180, "deg")
     Ap_arr[np.isnan(Ap_arr)] = Quantity(180, "deg")
-    ax.fill_betweenx(
-        W_arr.value, Ap_arr.value, Am_arr.value, color="w", alpha=0.2,
-    )
+    ax.plot(Ap_arr.value, W_arr.value, color="w", ls="--", lw=2)
+    ax.plot(Am_arr.value, W_arr.value, color="w", ls="-", lw=2)
+    #  ax.fill_betweenx(
+    #      W_arr.value, Ap_arr.value, Am_arr.value, color="w", alpha=0.2,
+    #  )
     return im
 
 
@@ -138,7 +141,7 @@ def plot_profile(ax_l, ax_r, name, Bh_B0, w_wce):
     R = model.R.code
     B0 = np.abs(model.B0.code)
 
-    z = np.linspace(-3, 3, Nz := 1000) * model.R.code
+    z = np.linspace(-3, 3, 1000) * model.R.code
     x = np.zeros_like(z)
     y = np.zeros_like(z)
     _, _, _, B0_x, _, B0_z = model.background_field(
@@ -157,7 +160,7 @@ def plot_profile(ax_l, ax_r, name, Bh_B0, w_wce):
 
     ax_r.plot(z / R, Bw_x / B0, "-r")
     ax_l.plot(z / R, B0_mag / B0, "-k")
-    mu.draw_arrows(ax_l, z[::-1] / R, B0_mag[::-1] / B0, N=4)
+    mu.draw_arrows(ax_l, z[::-1] / R, B0_mag[::-1] / B0, number_of_arrows=4)
 
     ax_l.set_xlim(z[0] / R, z[-1] / R)
     ax_l.set_ylim(0, 1.2)
@@ -170,6 +173,7 @@ def plot_profile(ax_l, ax_r, name, Bh_B0, w_wce):
     ax_r.set_ylabel("$B_{w,x}/B_0$")
     ax_r.tick_params(axis="y", colors="r")
     ax_r.yaxis.label.set_color("r")
+
 
 W_bins = Quantity(np.logspace(np.log10(50), np.log10(2e3), 100), "eV")
 A_bins = Quantity(np.arange(0, 181, 1), "deg")
@@ -186,12 +190,17 @@ ckw = dict(
 kernel = Gaussian2DKernel(4)
 kkw = dict(boundary="extend")
 
-fig = mu.plt.figure(figsize=(12, 10))
+fig = mu.plt.figure(figsize=(12, 9))
 gs = fig.add_gridspec(
-    6, 6,
+    6,
+    8,
     height_ratios=(1, 0.25, 1, 1, 1, 1),
-    hspace=0.4, wspace=0.05,
-    left=0.08, right=0.92, bottom=0.07, top=0.96,
+    hspace=0.4,
+    wspace=0.05,
+    left=0.08,
+    right=0.92,
+    bottom=0.07,
+    top=0.96,
 )
 
 ax_a_l = fig.add_subplot(gs[0, :])
@@ -199,11 +208,14 @@ ax_a_r = ax_a_l.twinx()
 mu.add_colorbar(ax_a_l).remove()
 mu.add_colorbar(ax_a_r).remove()
 plot_profile(ax_a_l, ax_a_r, "fig_energy_space_w_005_Bw_001_Bh_08", -0.8, 0.05)
-mu.add_text(ax_a_l, 0.01, 0.9, "(a)", ha="left", va="top")
+mu.add_panel_label(ax_a_l, 0.01, 0.9, "(a)", ha="left", va="top")
 ax_a_l.arrow(-2, 0.4, -0.5, 0.0, color="r", linewidth=2, head_width=0.02)
 ax_a_l.text(-2.3, 0.10, "$\\vec{k}$", color="r")
 ax_a_l.arrow(
-    -2.5, 1.42, -0.4, 0,
+    -2.5,
+    1.42,
+    -0.4,
+    0,
     color="k",
     linewidth=1,
     head_width=0.1,
@@ -211,7 +223,10 @@ ax_a_l.arrow(
 )
 ax_a_l.text(-2.4, 1.35, "SW", clip_on=False)
 ax_a_l.arrow(
-    2.5, 1.42, 0.4, 0,
+    2.5,
+    1.42,
+    0.4,
+    0,
     color="k",
     linewidth=1,
     head_width=0.1,
@@ -219,48 +234,70 @@ ax_a_l.arrow(
 )
 ax_a_l.text(2.4, 1.35, "ASW", clip_on=False, ha="right")
 
-ax_b = fig.add_subplot(gs[2:4, 0:2])
-mu.add_colorbar(ax_b).remove()
-im = plot_spectrum(ax_b, "fig_energy_space_w_005_Bw_001_Bh_03", -0.3, 0.05)
-mu.add_text(ax_b, 0.05, 0.95, "(b-1)", ha="left", va="top")
+cb_kw = dict(size="5%", pad=0.08)
 
-ax_c = fig.add_subplot(gs[2:4, 2:4])
-mu.add_colorbar(ax_c).remove()
-im = plot_spectrum(ax_c, "fig_energy_space_w_010_Bw_001_Bh_03", -0.3, 0.1)
-mu.add_text(ax_c, 0.05, 0.95, "(b-2)", ha="left", va="top")
+ax_b1 = fig.add_subplot(gs[2:4, 0:2])
+mu.add_colorbar(ax_b1, **cb_kw).remove()
+im = plot_spectrum(ax_b1, "fig_energy_space_w_005_Bw_001_Bh_03", -0.3, 0.05)
+mu.add_panel_label(ax_b1, 0.05, 0.95, "(b-1)", ha="left", va="top")
 
-ax_d = fig.add_subplot(gs[2:4, 4:6])
-mu.add_colorbar(ax_d).remove()
-im = plot_spectrum(ax_d, "fig_energy_space_w_015_Bw_001_Bh_03", -0.3, 0.15)
-mu.add_text(ax_d, 0.05, 0.95, "(b-3)", ha="left", va="top")
+ax_c1 = fig.add_subplot(gs[2:4, 2:4])
+mu.add_colorbar(ax_c1, **cb_kw).remove()
+im = plot_spectrum(ax_c1, "fig_energy_space_w_010_Bw_001_Bh_03", -0.3, 0.1)
+mu.add_panel_label(ax_c1, 0.05, 0.95, "(b-2)", ha="left", va="top")
 
-ax_e = fig.add_subplot(gs[4:6, 0:2])
-mu.add_colorbar(ax_e).remove()
-im = plot_spectrum(ax_e, "fig_energy_space_w_005_Bw_001_Bh_08", -0.8, 0.05)
-mu.add_text(ax_e, 0.05, 0.95, "(c-1)", ha="left", va="top")
+ax_d1 = fig.add_subplot(gs[2:4, 4:6])
+mu.add_colorbar(ax_d1, **cb_kw).remove()
+im = plot_spectrum(ax_d1, "fig_energy_space_w_015_Bw_001_Bh_03", -0.3, 0.15)
+mu.add_panel_label(ax_d1, 0.05, 0.95, "(b-3)", ha="left", va="top")
 
-ax_f = fig.add_subplot(gs[4:6, 2:4])
-mu.add_colorbar(ax_f).remove()
-im = plot_spectrum(ax_f, "fig_energy_space_w_010_Bw_001_Bh_08", -0.8, 0.1)
-mu.add_text(ax_f, 0.05, 0.95, "(c-2)", ha="left", va="top")
+ax_e1 = fig.add_subplot(gs[2:4, 6:8])
+mu.add_colorbar(ax_e1, **cb_kw).remove()
+im = plot_spectrum(ax_e1, "fig_energy_space_w_020_Bw_001_Bh_03", -0.3, 0.2)
+mu.add_panel_label(ax_e1, 0.05, 0.95, "(b-4)", ha="left", va="top")
 
-ax_g = fig.add_subplot(gs[4:6, 4:6])
-cax = mu.add_colorbar(ax_g)
-im = plot_spectrum(ax_g, "fig_energy_space_w_015_Bw_001_Bh_08", -0.8, 0.15)
-mu.add_text(ax_g, 0.05, 0.95, "(c-3)", ha="left", va="top")
+ax_b2 = fig.add_subplot(gs[4:6, 0:2])
+mu.add_colorbar(ax_b2, **cb_kw).remove()
+im = plot_spectrum(ax_b2, "fig_energy_space_w_005_Bw_001_Bh_08", -0.8, 0.05)
+mu.add_panel_label(ax_b2, 0.05, 0.95, "(c-1)", ha="left", va="top")
+
+ax_c2 = fig.add_subplot(gs[4:6, 2:4])
+mu.add_colorbar(ax_c2, **cb_kw).remove()
+im = plot_spectrum(ax_c2, "fig_energy_space_w_010_Bw_001_Bh_08", -0.8, 0.1)
+mu.add_panel_label(ax_c2, 0.05, 0.95, "(c-2)", ha="left", va="top")
+
+ax_d2 = fig.add_subplot(gs[4:6, 4:6])
+mu.add_colorbar(ax_d2, **cb_kw).remove()
+im = plot_spectrum(ax_d2, "fig_energy_space_w_015_Bw_001_Bh_08", -0.8, 0.15)
+mu.add_panel_label(ax_d2, 0.05, 0.95, "(c-3)", ha="left", va="top")
+
+ax_e2 = fig.add_subplot(gs[4:6, 6:8])
+cax = mu.add_colorbar(ax_e2, **cb_kw)
+im = plot_spectrum(ax_e2, "fig_energy_space_w_020_Bw_001_Bh_08", -0.8, 0.2)
+mu.add_panel_label(ax_e2, 0.05, 0.95, "(c-4)", ha="left", va="top")
 cb = fig.colorbar(im, cax=cax)
 cb.set_label("eV/(cm$^2$ s sr eV)")
 
-ax_b.set_title(r"$\omega/\Omega_{e}=0.05,B_h/B_0=0.3$", pad=10)
-ax_c.set_title(r"$\omega/\Omega_{e}=0.1,B_h/B_0=0.3$", pad=10)
-ax_d.set_title(r"$\omega/\Omega_{e}=0.15,B_h/B_0=0.3$", pad=10)
-ax_e.set_title(r"$\omega/\Omega_{e}=0.05,B_h/B_0=0.8$", pad=10)
-ax_f.set_title(r"$\omega/\Omega_{e}=0.1,B_h/B_0=0.8$", pad=10)
-ax_g.set_title(r"$\omega/\Omega_{e}=0.15,B_h/B_0=0.8$", pad=10)
-axes = np.array([
-    [ax_b, ax_c, ax_d],
-    [ax_e, ax_f, ax_g]
-])
+
+def get_trap_angle(z_R, Bh_B0):
+    cf.model.Bh = Bh_B0 * cf.model.B0
+    B0_z = cf.model.B0.code * cf.model.eta(
+        z_R * cf.R.code, *cf.model.background_field_args
+    )
+    return np.degrees(np.arcsin(np.sqrt(B0_z / cf.model.B0.code)))
+
+
+kw = dict(pad=10, fontsize="medium")
+ax_b1.set_title(r"$\omega/\Omega_{e}=0.05,B_h/B_0=0.3$", **kw)
+ax_c1.set_title(r"$\omega/\Omega_{e}=0.1,B_h/B_0=0.3$", **kw)
+ax_d1.set_title(r"$\omega/\Omega_{e}=0.15,B_h/B_0=0.3$", **kw)
+ax_e1.set_title(r"$\omega/\Omega_{e}=0.2,B_h/B_0=0.3$", **kw)
+ax_b2.set_title(r"$\omega/\Omega_{e}=0.05,B_h/B_0=0.8$", **kw)
+ax_c2.set_title(r"$\omega/\Omega_{e}=0.1,B_h/B_0=0.8$", **kw)
+ax_d2.set_title(r"$\omega/\Omega_{e}=0.15,B_h/B_0=0.8$", **kw)
+ax_e2.set_title(r"$\omega/\Omega_{e}=0.2,B_h/B_0=0.8$", **kw)
+axes = np.array([[ax_b1, ax_c1, ax_d1, ax_e1], [ax_b2, ax_c2, ax_d2, ax_e2]])
+skw = dict(marker="X", s=200, zorder=999, clip_on=False, ec="w", fc="k")
 for i, j in np.ndindex(axes.shape):
     ax = axes[i, j]
     ax.locator_params(axis="x", nbins=5)
@@ -274,9 +311,18 @@ for i, j in np.ndindex(axes.shape):
         ax.set_yticklabels([])
     if i == 1:
         ax.set_xlabel("$\\alpha$ (deg)")
+        ax.scatter([180 - get_trap_angle(1, 0.8)], [50], **skw)
     else:
         ax.set_xticklabels([])
+        ax.scatter([180 - get_trap_angle(1, 0.3)], [50], **skw)
 
-fig.align_ylabels([ax_a_l, ax_b, ax_f])
-fig.savefig(work_dir / "plots" / "weighted_energy_space.png", dpi=600)
-fig.savefig(work_dir / "plots" / "weighted_energy_space_lowres.png")
+fig.align_ylabels([ax_a_l, ax_b1, ax_c1])
+fig.savefig(
+    "../manuscript/assets/weighted_energy_space_hires.png",
+    dpi=300,
+)
+fig.savefig(
+    "../manuscript/assets/weighted_energy_space_lores.png",
+    dpi=100,
+)
+mu.plt.show()
