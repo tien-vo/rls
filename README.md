@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.12629752.svg)](http://dx.doi.org/10.5281/zenodo.12629752)
+
 # Relativistic Lorentz Simulation
 
 This package provides utilities for performing test-particle simulations in plasma physics. We make it public it together with an ApJL submission on whistlers collocated at a magnetic gradient, and intend to show its usage with future projects.
